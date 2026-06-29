@@ -1,0 +1,37 @@
+# Skyramp Workspace Configuration
+workspace:
+  repoName: chelfimo/langflow
+  repoUrl: https://github.com/chelfimo/langflow
+metadata:
+  schemaVersion: v1
+  executorVersion: v1.3.30
+  createdAt: "2026-06-29T18:40:41.112Z"
+  updatedAt: "2026-06-29T18:40:41.119Z"
+services:
+  - serviceName: langflow-backend
+    language: python
+    framework: pytest
+    testDirectory: src/backend/tests
+    api:
+      schemaPath: http://localhost:7860/openapi.json
+      authType: bearer
+      authHeader: Authorization
+      baseUrl: http://localhost:7860/api/v1
+    runtimeDetails:
+      serverStartCommand: docker compose -f .skyramp/sut/docker-compose.testbot.yml --project-directory . up -d --build
+      serverStopCommand: docker compose -f .skyramp/sut/docker-compose.testbot.yml --project-directory . down -v
+      runtime: docker
+      dockerNetwork: langflow_default
+  - serviceName: langflow-frontend
+    language: typescript
+    framework: playwright
+    testDirectory: src/frontend/tests
+    api:
+      authType: bearer
+      authHeader: Authorization
+      baseUrl: http://localhost:7860
+    runtimeDetails:
+      serverStartCommand: docker compose -f .skyramp/sut/docker-compose.testbot.yml --project-directory . up -d --build
+      serverStopCommand: docker compose -f .skyramp/sut/docker-compose.testbot.yml --project-directory . down -v
+      runtime: docker
+      dockerNetwork: langflow_default

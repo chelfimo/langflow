@@ -1,0 +1,46 @@
+# Testbot SUT — builds Langflow from PR source using the repo's own Dockerfile.
+# Run with: docker compose -f .skyramp/sut/docker-compose.testbot.yml --project-directory . up -d --build
+services:
+  postgres:
+    image: postgres:16-trixie
+    environment:
+      POSTGRES_USER: langflow
+      POSTGRES_PASSWORD: langflow
+      POSTGRES_DB: langflow
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U langflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  langflow:
+    build:
+      context: .
+      dockerfile: docker/build_and_push.Dockerfile
+    ports:
+      - "7860:7860"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - LANGFLOW_DATABASE_URL=postgresql://langflow:langflow@postgres:5432/langflow
+      - LANGFLOW_CONFIG_DIR=/app/langflow
+      - LANGFLOW_AUTO_LOGIN=true
+      - LANGFLOW_SECRET_KEY=testbot-ci-secret-key-not-for-production
+      - LANGFLOW_HOST=0.0.0.0
+      - LANGFLOW_PORT=7860
+    volumes:
+      - langflow-data:/app/langflow
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:7860/health"]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+      start_period: 120s
+
+volumes:
+  postgres-data:
+  langflow-data:
